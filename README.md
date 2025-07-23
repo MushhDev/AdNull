@@ -42,7 +42,7 @@ AdNull/
 ├── manifest.json          # Configuración de la extensión (Manifest V3)
 ├── background.js          # Bloqueador de peticiones a servidores de anuncios
 ├── content.js             # Eliminación de anuncios visibles por CSS
-├── icon.png               # Icono de la extensión
+├── icon.svg               # Icono de la extensión
 └── README.md              # Este archivo
 ```
 
