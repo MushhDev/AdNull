@@ -20,7 +20,7 @@ let blockedCount = 0;
 async function updateRules() {
   let externalRules = [];
   try {
-    const res = await fetch('https://easylist.to/easylist/easylist.txt');
+    const res = await fetch('https://easylist.to/easylist/easylist.txt', { mode: 'no-cors' });
     if (!res.ok) throw new Error();
     const text = await res.text();
     externalRules = text.split('\n')
