@@ -13,7 +13,12 @@
     "<all_urls>"
   ],
   "action": {
-    "default_title": "AdNull"
+    "default_title": "AdNull",
+    "default_icon": {
+      "16": "logo.svg",
+      "48": "logo.svg",
+      "128": "logo.svg"
+    }
   },
   "background": {
     "service_worker": "background.js"
@@ -25,4 +30,9 @@
       "run_at": "document_idle"
     }
   ],
+  "icons": {
+    "16": "logo.svg",
+    "48": "logo.svg",
+    "128": "logo.svg"
+  }
 }
