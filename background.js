@@ -39,6 +39,13 @@ async function fetchExternalRules() {
 }
 
 async function updateRules() {
+  const { adblockEnabled } = await chrome.storage.local.get('adblockEnabled');
+  if (adblockEnabled === false) {
+    const rules = await chrome.declarativeNetRequest.getDynamicRules();
+    const ids = rules.map(r => r.id);
+    await chrome.declarativeNetRequest.updateDynamicRules({ addRules: [], removeRuleIds: ids });
+    return;
+  }
   const externalRules = await fetchExternalRules();
   const allRules = [...baseRules, ...externalRules];
   try {
@@ -62,4 +69,5 @@ setInterval(updateRules, 86400000);
 
 chrome.runtime.onMessage.addListener((msg, _, sendResponse) => {
   if (msg === 'getBlockedCount') sendResponse({ blocked: blockedCount });
+  if (msg.type === 'adblockToggle') updateRules();
 });
