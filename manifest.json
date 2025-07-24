@@ -18,7 +18,8 @@
       "16": "logo.svg",
       "48": "logo.svg",
       "128": "logo.svg"
-    }
+    },
+    "default_popup": "popup.html"
   },
   "background": {
     "service_worker": "background.js"
@@ -34,5 +35,11 @@
     "16": "logo.svg",
     "48": "logo.svg",
     "128": "logo.svg"
-  }
+  },
+  "web_accessible_resources": [
+    {
+      "resources": ["popup.html"],
+      "matches": ["<all_urls>"]
+    }
+  ]
 }
