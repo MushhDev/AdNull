@@ -17,39 +17,48 @@ const baseRules = [
 
 let blockedCount = 0;
 
-async function updateRules() {
-  let externalRules = [];
+async function fetchExternalRules() {
   try {
-    const res = await fetch('https://easylist.to/easylist/easylist.txt', { mode: 'no-cors' });
-    if (!res.ok) throw new Error();
+    const res = await fetch('https://raw.githubusercontent.com/uBlockOrigin/uAssets/master/filters/filters.txt');
+    if (!res.ok) return [];
     const text = await res.text();
-    externalRules = text.split('\n')
-      .filter(line => line.startsWith('||') && !line.startsWith('!'))
-      .slice(0, 50)
-      .map((line, i) => ({
-        id: baseRules.length + 1 + i,
-        priority: 1,
-        action: { type: "block" },
-        condition: {
-          urlFilter: line.replace(/^||/, '').replace(/\^.*$/, ''),
-          resourceTypes: ["script", "image", "xmlhttprequest", "sub_frame", "media"]
-        }
-      }));
-  } catch {}
-  const allRules = [...baseRules, ...externalRules];
-  chrome.declarativeNetRequest.getDynamicRules(existingRules => {
-    const existingIds = new Set(existingRules.map(r => r.id));
-    const toAdd = allRules.filter(r => !existingIds.has(r.id));
-    const toRemove = existingRules.filter(r => !allRules.some(rule => rule.id === r.id)).map(r => r.id);
-    chrome.declarativeNetRequest.updateDynamicRules({ addRules: toAdd, removeRuleIds: toRemove });
-  });
+    const lines = text.split('\n').filter(line => line.startsWith('||') && !line.includes('*') && !line.includes('^$') && !line.startsWith('!'));
+    const domains = [...new Set(lines.map(l => l.replace(/^||/, '').replace(/\^.*$/, '').trim()).filter(Boolean))].slice(0, 200);
+    return domains.map((domain, i) => ({
+      id: baseRules.length + i + 1,
+      priority: 1,
+      action: { type: "block" },
+      condition: {
+        urlFilter: domain,
+        resourceTypes: ["script", "image", "xmlhttprequest", "sub_frame", "media"]
+      }
+    }));
+  } catch {
+    return [];
+  }
 }
 
-chrome.declarativeNetRequest.onRuleMatchedDebug.addListener(() => { blockedCount++; });
+async function updateRules() {
+  const externalRules = await fetchExternalRules();
+  const allRules = [...baseRules, ...externalRules];
+  try {
+    const existing = await chrome.declarativeNetRequest.getDynamicRules();
+    const existingIds = new Set(existing.map(r => r.id));
+    const toAdd = allRules.filter(r => !existingIds.has(r.id));
+    const toRemove = existing.filter(r => !allRules.some(rule => rule.id === r.id)).map(r => r.id);
+    await chrome.declarativeNetRequest.updateDynamicRules({ addRules: toAdd, removeRuleIds: toRemove });
+  } catch {}
+}
 
-chrome.runtime.onInstalled.addListener(() => { updateRules(); });
+chrome.declarativeNetRequest.onRuleMatchedDebug.addListener(() => {
+  blockedCount++;
+});
 
-setInterval(updateRules, 24 * 60 * 60 * 1000);
+chrome.runtime.onInstalled.addListener(() => {
+  updateRules();
+});
+
+setInterval(updateRules, 86400000);
 
 chrome.runtime.onMessage.addListener((msg, _, sendResponse) => {
   if (msg === 'getBlockedCount') sendResponse({ blocked: blockedCount });
